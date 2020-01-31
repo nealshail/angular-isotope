@@ -37,8 +37,8 @@ angular.module("iso.controllers", ["iso.config", "iso.services"])
       $scope.delayedInit();
     });
     $scope.init = function(isoInit) {
+      var isotopeContainer = isoInit.element;
       optionsStore.storeInit(isoInit);
-      isotopeContainer = isoInit.element;
       initEventHandler($scope.$on, isoInit.isoOptionsEvent || topics.MSG_OPTIONS, optionsHandler);
       initEventHandler($scope.$on, isoInit.isoMethodEvent || topics.MSG_METHOD, methodHandler);
       $scope.isoMode = isoInit.isoMode || "addItems";
@@ -64,45 +64,56 @@ angular.module("iso.controllers", ["iso.config", "iso.services"])
         postInitialized = true;
       });
     };
-    $scope.setIsoElement = function($element) {
+    $scope.setIsoElement = function($element, isotopeContainer) {
       if (postInitialized) {
         return $timeout(function() {
           return isotopeContainer.isotope($scope.isoMode, $element);
         });
       }
     };
-    $scope.refreshIso = function() {
+    $scope.refreshIso = function(isotopeContainer) {
       if (postInitialized) {
         return isotopeContainer.isotope();
       }
     };
-    $scope.updateOptions = function(option) {
+    $scope.updateOptions = function(option, isotopeContainer) {
       if (isotopeContainer) {
         isotopeContainer.isotope(option);
       } else {
         optionsStore.store(option);
       }
     };
-    $scope.updateMethod = function(name, params, cb) {
+    $scope.updateMethod = function(name, params, cb, isotopeContainer) {
       return isotopeContainer.isotope(name, params, cb);
     };
     optionsHandler = function(event, option) {
-      return $scope.updateOptions(option);
+      var isotopeContainer = $('[iso-options-subscribe="'+ event.name +'"]');
+      if (!isotopeContainer || isotopeContainer.length == 0){
+        isotopeContainer = $('[isotope-container]');
+      }
+      return $scope.updateOptions(option, isotopeContainer);
     };
     methodHandler = function(event, option) {
       var name, params;
+      var isotopeContainer = $('[iso-method-subscribe="'+ event.name +'"]');
+      if (!isotopeContainer || isotopeContainer.length == 0){
+        isotopeContainer = $('[isotope-container]');
+      }
       name = option.name;
       params = option.params;
-      return $scope.updateMethod(name, params, null);
+      return $scope.updateMethod(name, params, null, isotopeContainer);
     };
 
     $scope.removeAll = function(cb) {
+       // TODO how to get the context, i.e. the correct isotopeContianer?
       return isotopeContainer.isotope("remove", isotopeContainer.data("isotope").$allAtoms, cb);
     };
     $scope.refresh = function() {
+      // TODO how to get the context, i.e. the correct isotopeContianer?
       return isotopeContainer.isotope();
     };
     $scope.$on(config.refreshEvent, function() {
+       // TODO how to get the context, i.e. the correct isotopeContianer?
       return $scope.refreshIso();
     });
     $scope.$on(topics.MSG_REMOVE, function(message, element) {
@@ -115,6 +126,7 @@ angular.module("iso.controllers", ["iso.config", "iso.services"])
       return methodHandler(message, opt);
     });
     $scope.removeElement = function(element) {
+      var isotopeContainer = element.parent('[isotope-container]');
       return isotopeContainer && isotopeContainer.isotope("remove", element);
     };
   }

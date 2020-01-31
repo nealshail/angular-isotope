@@ -15,7 +15,7 @@ angular.module("iso.directives")
         if (isoOptions) {
           linkOptions = $parse(isoOptions)(scope);
           if (angular.isObject(linkOptions)) {
-            scope.updateOptions(linkOptions);
+            scope.updateOptions(linkOptions, element);
           }
         }
         isoInit.element = element;
@@ -38,22 +38,22 @@ angular.module("iso.directives")
       restrict: "A",
       require: "^isotopeContainer",
       link: function(scope, element, attrs) {
-
-        scope.setIsoElement(element);
+        var isotopeContainer = element.parent('[isotope-container]');
+        scope.setIsoElement(element, isotopeContainer);
         scope.$on('$destroy', function(message) {
           $rootScope.$broadcast(topics.MSG_REMOVE, element);
         });
         if (attrs.ngRepeat && true === scope.$last && "addItems" === scope.isoMode) {
           element.ready(function() {
             return $timeout((function() {
-              return scope.refreshIso();
+              return scope.refreshIso(isotopeContainer);
             }), config.refreshDelay || 0);
           });
         }
         if (!attrs.ngRepeat) {
           element.ready(function() {
             return $timeout((function() {
-              return scope.refreshIso();
+              return scope.refreshIso(isotopeContainer);
             }), config.refreshDelay || 0);
           });          
         }
